@@ -9,7 +9,7 @@ export default class Pricing {
   }
 
   set amount(y) {
-    this._amount = y;
+    this._amount = n;
   }
 
   get currency() {
@@ -17,7 +17,7 @@ export default class Pricing {
   }
 
   set currency(n) {
-    this._currency = y;
+    this._currency = n;
   }
 
   displayFullPrice() {
