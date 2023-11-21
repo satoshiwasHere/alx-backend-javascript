@@ -1,34 +1,40 @@
 const fs = require('fs');
 
-
-function countStudents(dbPath) {
+/**
+ * Reads CSV file asynchronously, parses the data,
+ * prints it to stdout.
+ */
+module.exports = function countStudents(path) {
   return new Promise((resolve, reject) => {
-    fs.readFile(dbPath, 'utf-8', (error, data) => {
-      if (error) {
-        reject(Error('Cannot load the database'));
-      } else {
-        const courses = new Map();
-        let students = data.split('\n');
-        students = students.slice(1, students.length - 1);
+    fs.readFile(path, { encoding: 'utf-8' }, (err, data) => {
+      if (err) return reject(Error('Cannot load the database'));
+      // divide data and taking only list minus header
+      const lines = data.split('\n').slice(1, -1);
+      // give the header of data
+      const header = data.split('\n').slice(0, 1)[0].split(',');
+      // Search for firstname and field index
+      const idxFn = header.findIndex((ele) => ele === 'firstname');
+      const idxFd = header.findIndex((ele) => ele === 'field');
+      // declarate 2 dictionaries for count each fields and store list of students
+      const fields = {};
+      const students = {};
 
-        // Parse CSV data initiating a map of courseData objects.
-        students.forEach((student) => {
-          const studentData = student.split(',');
-          const firstName = studentData[0];
-          const field = studentData[3];
-          if (courses.has(field)) courses.get(field).push(firstName);
-          else courses.set(field, [firstName]);
-        });
+      lines.forEach((line) => {
+        const list = line.split(',');
+        if (!fields[list[idxFd]]) fields[list[idxFd]] = 0;
+        fields[list[idxFd]] += 1;
+        if (!students[list[idxFd]]) students[list[idxFd]] = '';
+        students[list[idxFd]] += students[list[idxFd]] ? `, ${list[idxFn]}` : list[idxFn];
+      });
 
-        // shows information from map
-        console.log(`Number of students: ${students.length}`);
-        courses.forEach((courseStudents, course) => {
-          console.log(`Number of students in ${course}: ${courseStudents.length}. List: ${courseStudents.join(', ')}`);
-        });
-        resolve();
+      console.log(`Number of students: ${lines.length}`);
+      for (const key in fields) {
+        if (Object.hasOwnProperty.call(fields, key)) {
+          const element = fields[key];
+          console.log(`Number of students in ${key}: ${element}. List: ${students[key]}`);
+        }
       }
+      return resolve();
     });
   });
-}
-
-module.exports = countStudents;
+};
