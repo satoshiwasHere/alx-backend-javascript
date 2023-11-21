@@ -1,3 +1,6 @@
+/**
+ * Small HTTP server using the http module:
+ */
 const http = require('http');
 const fs = require('fs');
 
