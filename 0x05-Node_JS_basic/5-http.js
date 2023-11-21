@@ -1,55 +1,71 @@
 /**
- * Small HTTP server using the http module:
+ * simple HTTP server using the http module
  */
+
 const http = require('http');
 const fs = require('fs');
 
-const db = process.argv[2] === undefined ? '' : process.argv[2];
-const host = '127.0.0.1';
-const port = 1245;
-const app = http.createServer((req, resp) => {
-  // Disable ESLint rule regarding parameter reassignment for the next line
-  resp.statusCode = 200;
-  resp.setHeader('Content-Type', 'text/plain');
-  if (req.url === '/') {
-    resp.end('Hello Holberton School!');
-  }
-  if (req.url === '/students') {
-    const body = ['This is the list of our students'];
-    fs.readFile(db, 'utf-8', (error, data) => {
-      if (error) {
-        body.push('Cannot load the database');
-        resp.end(body.join('\n'));
-      } else {
-        const courses = new Map();
-        let students = data.split('\n');
-        students = students.slice(1, students.length - 1);
+function countStudents(path) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path, { encoding: 'utf-8' }, (err, data) => {
+      if (err) return reject(Error('Cannot load the database'));
+      // split data and taking only list without header
+      const lines = data.split('\n').slice(1, -1);
+      // give the header of data
+      const header = data.split('\n').slice(0, 1)[0].split(',');
+      // search for firstname and field index
+      const idxFn = header.findIndex((ele) => ele === 'firstname');
+      const idxFd = header.findIndex((ele) => ele === 'field');
+      // declarate 2 dictionaries for count each fields and store list of students
+      const fields = {};
+      const students = {};
+      // to contain all data
+      const all = {};
 
-        // Parse CSV data initiating a map of courseData objects.
-        students.forEach((student) => {
-          const studentData = student.split(',');
-          const firstName = studentData[0];
-          const field = studentData[3];
-          if (courses.has(field)) {
-            courses.get(field).push(firstName);
-          } else {
-            courses.set(field, [firstName]);
-          }
-        });
+      lines.forEach((line) => {
+        const list = line.split(',');
+        if (!fields[list[idxFd]]) fields[list[idxFd]] = 0;
+        fields[list[idxFd]] += 1;
+        if (!students[list[idxFd]]) students[list[idxFd]] = '';
+        students[list[idxFd]] += students[list[idxFd]]
+          ? `, ${list[idxFn]}`
+          : list[idxFn];
+      });
 
-        // arange data in an array
-        body.push(`Number of students: ${students.length}`);
-        courses.forEach((courseStudents, course) => {
-          body.push(`Number of students in ${course}: ${courseStudents.length}. List: ${courseStudents.join(', ')}`);
-        });
+      all.numberStudents = `Number of students: ${lines.length}\n`;
+      all.listStudents = [];
+      for (const key in fields) {
+        if (Object.hasOwnProperty.call(fields, key)) {
+          const element = fields[key];
+          all.listStudents.push(`Number of students in ${key}: ${element}. List: ${students[key]}`);
+        }
       }
-      resp.end(body.join('\n'));
+      return resolve(all);
     });
+  });
+}
+
+const hostname = '127.0.0.1';
+const port = 1245;
+
+const app = http.createServer((req, res) => {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+  if (req.url === '/') res.end('Hello Holberton School!');
+  if (req.url === '/students') {
+    res.write('This is the list of our students\n');
+    countStudents(process.argv[2])
+      .then((data) => {
+        res.write(data.numberStudents);
+        res.write(data.listStudents.join('\n'));
+        res.end();
+      })
+      .catch((err) => {
+        res.end(err.message);
+      });
   }
 });
 
-app.listen(port, host, () => {
-  console.log(`Server is live, running at http://${host}:${port}`);
-});
+app.listen(port, hostname);
 
 module.exports = app;
