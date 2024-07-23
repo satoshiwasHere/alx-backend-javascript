@@ -2,7 +2,7 @@ const fs = require('fs');
 
 /**
  * Reads CSV file asynchronously, parses the data,
- * print it to stdout.
+ * prints it to stdout.
  */
 module.exports = function countStudents(path) {
   return new Promise((resolve, reject) => {

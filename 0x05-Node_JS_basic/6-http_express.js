@@ -1,5 +1,5 @@
-i/**
- * Basic server for Express
+/**
+ * Basic express server
  */
 
 const express = require('express');
