@@ -2,7 +2,7 @@
  * script prints user's name
  *  - Prompt user to enter user name
  *  - Display entered user name
- *  - alert user on exiting
+ *  - alert user on exit
  */
 process.stdout.write('Welcome to Holberton School, what is your name?\n');
 
